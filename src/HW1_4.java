@@ -3,7 +3,10 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.TreeMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -27,14 +30,14 @@ public class HW1_4 {
         Text friend = new Text();
 
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            String[] line = value.toString().split("\t");
+            String line[] = value.toString().split("\t");
             user.set(Long.parseLong(line[0]));
             Text data = new Text();
             data.set(user.toString());
 
             if (line.length != 1) {
                 String mFriends = line[1];
-                String outvalue = ("U:" + mFriends);
+                String outvalue = ("U:" + mFriends.toString());
                 context.write(user, new Text(outvalue));
             }
         }
@@ -45,7 +48,7 @@ public class HW1_4 {
         private Text outvalue = new Text();
 
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            String[] arr = value.toString().split(",");
+            String arr[] = value.toString().split(",");
             if (arr.length == 10) {
 
                 outkey.set(Long.parseLong(arr[0]));
@@ -65,7 +68,7 @@ public class HW1_4 {
                         result--;
                     }
                 }
-                String data = arr[1] + "," + result + "," + arr[3] + "," + arr[4] + "," + arr[5];
+                String data = arr[1] + "," + new Integer(result).toString() + "," + arr[3] + "," + arr[4] + "," + arr[5];
                 outvalue.set("R:" + data);
                 context.write(outkey, outvalue);
             }
@@ -82,7 +85,7 @@ public class HW1_4 {
             myMap = new HashMap<String, String>();
             String mybusinessdataPath = config.get("businessdata");
 
-            Path pt = new Path(mybusinessdataPath);
+            Path pt = new Path("hdfs://cshadoop1" + mybusinessdataPath);
             FileSystem fs = FileSystem.get(config);
             BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(pt)));
             String line;
@@ -116,11 +119,11 @@ public class HW1_4 {
 
             if (!listA.isEmpty() && !listB.isEmpty()) {
                 for (Text A : listA) {
-                    String[] frd = A.toString().split(",");
+                    String frd[] = A.toString().split(",");
 
-                    for (String s : frd) {
-                        if (myMap.containsKey(s)) {
-                            String[] ageCalu = myMap.get(s).split(":");
+                    for (int i = 0; i < frd.length; i++) {
+                        if (myMap.containsKey(frd[i])) {
+                            String[] ageCalu = myMap.get(frd[i]).split(":");
                             Date now = new Date();
                             int Month = now.getMonth() + 1;
                             int Year = now.getYear() + 1900;
@@ -158,15 +161,24 @@ public class HW1_4 {
     }
 
     public static class HW1_4_2Mapper extends Mapper<LongWritable, Text, UserPageWritable, Text> {
-        private Long outkey = 0L;
+        private Long outkey = new Long(0L);
 
+
+        public Long getOutkey() {
+            return outkey;
+        }
+
+        public void setOutkey(Long outkey) {
+            this.outkey = outkey;
+        }
 
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 
             String[] m = value.toString().split("\t");
-            outkey = Long.parseLong(m[0]);
+            Long l = Long.parseLong(m[0]);
+            outkey = l;
             if (m.length == 2) {
-                String[] line = m[1].split(",");
+                String line[] = m[1].split(",");
 
                 context.write(new UserPageWritable(Float.parseFloat(m[0]), Float.parseFloat(line[5])),
                         new Text(m[1].toString()));
@@ -188,7 +200,7 @@ public class HW1_4 {
             this.userId = userId;
         }
 
-        Float getFriendId() {
+        public Float getFriendId() {
             return friendId;
         }
 
@@ -196,7 +208,7 @@ public class HW1_4 {
             this.friendId = friendId;
         }
 
-        UserPageWritable(Float user, Float friend1) {
+        public UserPageWritable(Float user, Float friend1) {
             // TODO Auto-generated constructor stub
             this.userId = user;
             this.friendId = friend1;
@@ -244,10 +256,10 @@ public class HW1_4 {
                 return false;
             }
             final UserPageWritable other = (UserPageWritable) obj;
-            if (!this.userId.equals(other.userId)) {
+            if (this.userId != other.userId && (this.userId == null || !this.userId.equals(other.userId))) {
                 return false;
             }
-            if (!Objects.equals(this.friendId, other.friendId)) {
+            if (this.friendId != other.friendId && (this.friendId == null || !this.friendId.equals(other.friendId))) {
                 return false;
             }
             return true;
@@ -273,7 +285,9 @@ public class HW1_4 {
             UserPageWritable key1 = (UserPageWritable) w1;
             UserPageWritable key2 = (UserPageWritable) w2;
 
-            return -1 * key1.getFriendId().compareTo(key2.getFriendId());
+            int cmpResult = -1 * key1.getFriendId().compareTo(key2.getFriendId());
+
+            return cmpResult;
         }
     }
 
@@ -325,7 +339,7 @@ public class HW1_4 {
             System.exit(2);
         }
 
-        Job job = Job.getInstance(conf, "join1 ");
+        Job job = new Job(conf, "join1 ");
         job.setJarByClass(HW1_4.class);
         job.setReducerClass(HW1_4Reducer.class);
 
@@ -339,7 +353,7 @@ public class HW1_4 {
         FileOutputFormat.setOutputPath(job, outputDirIntermediate1);
 
         int code = job.waitForCompletion(true) ? 0 : 1;
-        Job job1 = Job.getInstance(new Configuration(), "join2");
+        Job job1 = new Job(new Configuration(), "join2");
         job1.setJarByClass(HW1_4.class);
 
 
@@ -358,6 +372,8 @@ public class HW1_4 {
 
         FileOutputFormat.setOutputPath(job1, outputDirIntermediate2);
 
+        // Execute job and grab exit code
+        code = job1.waitForCompletion(true) ? 0 : 1;
 
     }
 }
