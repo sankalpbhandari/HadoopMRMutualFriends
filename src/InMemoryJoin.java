@@ -75,7 +75,7 @@ public class InMemoryJoin {
         Configuration conf = new Configuration();
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         if (otherArgs.length != 5) {
-            System.err.println("Usage: Error");
+            System.err.println("Usage: InMemoryJoin UserA UserB <FriendsFile> <UserData> <Output>");
             System.exit(2);
         }
         conf.set("userA", otherArgs[0]);

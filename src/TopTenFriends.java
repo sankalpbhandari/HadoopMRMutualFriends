@@ -1,5 +1,4 @@
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.Job;
@@ -8,14 +7,12 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
-import org.apache.hadoop.util.Tool;
-import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class TopTenFriends extends Configured implements Tool {
+public class TopTenFriends {
     public static class Map2 extends Mapper<LongWritable, Text, IntWritable, Text> {
 
         IntWritable k = new IntWritable();
@@ -76,19 +73,11 @@ public class TopTenFriends extends Configured implements Tool {
     }
 
     public static void main(String[] args) throws Exception {
-        int exitCode = ToolRunner.run(new TopTenFriends(), args);
-        System.exit(exitCode);
-    }
-
-
-    public int run(String[] args) throws Exception {
-
         Configuration conf1 = new Configuration();
         String[] otherArgs = new GenericOptionsParser(conf1, args).getRemainingArgs();
-        // get all args
         if (otherArgs.length != 2) {
             System.out.println(otherArgs[0]);
-            System.err.println("Usage: Top10MutualFriends <in> <out>");
+            System.err.println("Usage: Top10MutualFriends <Output of MutualFriends> <Output>");
             System.exit(2);
         }
 
@@ -105,13 +94,8 @@ public class TopTenFriends extends Configured implements Tool {
 
         job2.setOutputKeyClass(IntWritable.class);
         job2.setOutputValueClass(Text.class);
+        job2.waitForCompletion(true);
 
-        // delete temp directory
-        if (job2.waitForCompletion(true)) {
-            return 1;
-        } else {
-            return 0;
-        }
 
     }
 
