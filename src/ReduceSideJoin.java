@@ -236,18 +236,12 @@ public class ReduceSideJoin {
 
     public static class MaxAgeReducer extends Reducer<MaxAgeCustom, Text, Text, Text> {
         TreeMap<String, String> output = new TreeMap<>();
-        int count = 0;
-
 
         public void reduce(MaxAgeCustom key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             for (Text t : values) {
-                if (count == 15)
-                    break;
-                else {
-                    output.put(key.userId.toString(), t.toString());
-                    context.write(new Text(t.toString().split(",")[0]), new Text(t));
-                    count++;
-                }
+                output.put(key.userId.toString(), t.toString());
+                context.write(new Text(t.toString().split(",")[0]), new Text(t));
+
             }
         }
     }
